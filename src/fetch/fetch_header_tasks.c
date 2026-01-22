@@ -14,7 +14,7 @@ void range_tasks(char *buf, main_t *main)
     while (buf[i] != ')')
         i++;
     i += 2;
-    if (buf[i] == 'S')
+    if (buf[i] == 'S' || buf[i] == 'D' || buf[i] == 'I')
         main->info.header_tasks.sleeping++;
     if (buf[i] == 'R')
         main->info.header_tasks.running++;
