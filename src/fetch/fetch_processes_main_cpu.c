@@ -11,19 +11,23 @@ long long get_system_total_time(void)
 {
     FILE *file = fopen("/proc/stat", "r");
     char buf[256];
+    long long vals[8];
     long long total = 0;
-    int i = 0;
+    int scanned = 0;
 
     if (!file)
         return 0;
-    fgets(buf, sizeof(buf), file);
-    fclose(file);
-    for (i = 5; buf[i]; i++) {
-        if (buf[i] >= '0' && buf[i] <= '9')
-            total += atoll(&buf[i]);
-        while (buf[i] && buf[i] != ' ')
-            i++;
+    if (!fgets(buf, sizeof(buf), file)) {
+        fclose(file);
+        return 0;
     }
+    fclose(file);
+    scanned = sscanf(buf, "cpu %lld %lld %lld %lld %lld %lld %lld %lld",
+        &vals[0], &vals[1], &vals[2], &vals[3],
+        &vals[4], &vals[5], &vals[6], &vals[7]);
+    if (scanned == 8)
+        total = vals[0] + vals[1] + vals[2] + vals[3] +
+            vals[4] + vals[5] + vals[6] + vals[7];
     return total;
 }
 
