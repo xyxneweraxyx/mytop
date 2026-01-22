@@ -98,6 +98,9 @@ static int parse_stat(FILE *file, main_t *main, int *total)
     parse_stat_values(end + 4, values);
     main->info.processes[*total].pr = (int)values[14];
     main->info.processes[*total].ni = (int)values[15];
+    main->info.processes_cpu_new[*total].pid = main->info.processes[*total].pid;
+    main->info.processes_cpu_new[*total].utime = values[10];
+    main->info.processes_cpu_new[*total].stime = values[11];
     calc_time(main, total, values);
     calc_virt(main, total, values);
     return EXIT_SUCC;

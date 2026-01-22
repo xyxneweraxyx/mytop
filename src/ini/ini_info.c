@@ -66,7 +66,19 @@ void ini_processes(main_t *main)
 
 void ini_info(main_t *main)
 {
+    int i = 0;
+
     ini_header_one(main);
     ini_header_two(main);
     ini_processes(main);
+    main->info.system_time_old = 0;
+    main->info.system_time_new = 0;
+    for (i = 0; i < 64; i++) {
+        main->info.processes_cpu_old[i].pid = 0;
+        main->info.processes_cpu_old[i].utime = 0;
+        main->info.processes_cpu_old[i].stime = 0;
+        main->info.processes_cpu_new[i].pid = 0;
+        main->info.processes_cpu_new[i].utime = 0;
+        main->info.processes_cpu_new[i].stime = 0;
+    }
 }

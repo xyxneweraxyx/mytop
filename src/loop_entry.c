@@ -41,6 +41,7 @@ int main_loop(main_t *main)
         noecho();
         if (!fetched) {
             cpu_function(main);
+            main->info.system_time_old = get_system_total_time();
             fetched = 1;
         }
         if (inputs == EXIT_FAIL)
@@ -61,8 +62,12 @@ int main_loop(main_t *main)
             fetched = 0;
             cpu_function(main);
             cpu_calcul(main);
+            main->info.system_time_new = get_system_total_time();
+            calc_processes_cpu_mem(main);
+            main->info.system_time_old = main->info.system_time_new;
             data_time = 0;
         }
+        main->info.processes_total_available = count_total_processes(main);
         if (fetch(main) == EXIT_FAIL || display(main) == EXIT_FAIL)
             return EXIT_FAIL;
         if (main->args.frames && ++frame_count >= main->args.frames)

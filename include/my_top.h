@@ -155,6 +155,13 @@ typedef struct header_swap {
     float avail;
 } header_swap_t;
 
+typedef struct prc_cpu_data {
+    int pid;
+    long long utime;
+    long long stime;
+    long long total_time;
+} prc_cpu_data_t;
+
 typedef struct info {
     header_top_t header_top;
     header_tasks_t header_tasks;
@@ -165,6 +172,11 @@ typedef struct info {
     header_swap_t header_swap;
     prc_t processes[64];
     int processes_skip;
+    int processes_total_available;
+    prc_cpu_data_t processes_cpu_old[64];
+    prc_cpu_data_t processes_cpu_new[64];
+    long long system_time_new;
+    long long system_time_old;
 } info_t;
 
 typedef enum str_param {
@@ -227,6 +239,9 @@ int cpu_function(main_t *main);
 void cpu_calcul(main_t *main);
 int fetch_header_mem_swap(main_t *main);
 int fetch_processes(main_t *main);
+void calc_processes_cpu_mem(main_t *main);
+long long get_system_total_time(void);
+int count_total_processes(main_t *main);
 
 int display(main_t *main);
 void disp_head_top(main_t *main);
