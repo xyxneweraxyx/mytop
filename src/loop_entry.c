@@ -31,6 +31,8 @@ int handle_inputs(main_t *main)
 int main_loop(main_t *main)
 {
     unsigned int time_elapsed = main->args.delay * 1000000;
+    unsigned int data_time = 0;
+    unsigned int frame_count = 0;
     int inputs = 0;
     int fetched = 0;
 
@@ -50,14 +52,21 @@ int main_loop(main_t *main)
         if (time_elapsed < main->args.delay * 1000000 && inputs == EXIT_SUCC) {
             usleep(MIN_DELAY);
             time_elapsed += MIN_DELAY;
+            data_time += MIN_DELAY;
             continue;
         }
         time_elapsed = 0;
-        fetched = 0;
-        cpu_function(main);
-        cpu_calcul(main);
+        data_time += MIN_DELAY;
+        if (data_time >= 100000) {
+            fetched = 0;
+            cpu_function(main);
+            cpu_calcul(main);
+            data_time = 0;
+        }
         if (fetch(main) == EXIT_FAIL || display(main) == EXIT_FAIL)
             return EXIT_FAIL;
+        if (main->args.frames && ++frame_count >= main->args.frames)
+            return EXIT_SUCC;
     }
     return EXIT_SUCC;
 }
