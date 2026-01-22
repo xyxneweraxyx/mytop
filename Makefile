@@ -11,7 +11,7 @@ HDR := $(shell find . -name '*.h')
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) $(FLAGS) $(SRC) -o $(TARGET) -lncurses
+	$(CC) $(FLAGS) $(SRC) -o $(TARGET) -lncurses -lm
 
 clean:
 	rm -f $(shell find . -name '*.o')

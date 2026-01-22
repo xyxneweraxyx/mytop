@@ -60,5 +60,3 @@ int parse_args(int argc, char **argv, main_t *main)
     }
     return EXIT_SUCC;
 }
-
-// ./my_top -u newera -d 15.5 -n 30

@@ -25,6 +25,7 @@ static int ini_ncurses(main_t *main)
     WINDOW *screen;
 
     signal(SIGSEGV, handler);
+    signal(SIGIOT, handler);
     screen = initscr();
     if (!screen)
         return EXIT_FAIL;
@@ -45,6 +46,8 @@ int main(int argc, char **argv)
     if (ini_ncurses(&main) == EXIT_FAIL)
         return EXIT_FAIL;
     getmaxyx(main.ncurses.screen, main.ncurses.y, main.ncurses.x);
+    if (etc_parser(&main) == EXIT_FAIL)
+        return EXIT_FAIL;
     if (main_loop(&main) == EXIT_FAIL)
         return EXIT_FAIL;
     end_program(&main);

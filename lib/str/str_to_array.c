@@ -5,6 +5,8 @@
 ** Convert a string to an array based on a number of seps and a max amount.
 */
 
+#include "./../../include/my_top.h"
+
 static int c_s(const char c, const char *str)
 {
     int i = 0;
@@ -13,22 +15,50 @@ static int c_s(const char c, const char *str)
     return (str[i] == 0) ? -1 : i;
 }
 
-int str_to_array(const char *str, const char *sep, int max, char buf[max][64])
+static int skip_wrds(const char *str, const char *sep, str_arr_t *par)
 {
-    int w = 0;
+    int skip = 0;
     int cur = 0;
 
-    for (int i = 0; c_s(str[i], sep) != -1 && str[i]; str++);
-    buf[0][0] = (c_s(str[0], sep) != -1) ? 0 : str[0];
-    for (int i = 0; str[i] && w < max; i++) {
-        if (c_s(str[i], sep) == -1) {
-            buf[w][cur] = str[i];
-            cur++;
-        }
-        if ((c_s(str[i], sep) != -1) && (c_s(str[i + 1], sep) == -1)) {
-            cur = 0;
-            w += 1;
+    for (cur = 0; skip < par->skip && str[cur]; cur++) {
+        if (c_s(str[cur], sep) == -1 && c_s(str[cur + 1], sep) != -1)
+            skip++;
+    }
+    if (skip != par->skip)
+        return -2;
+    for (; c_s(str[cur], sep) != -1; cur++);
+    return cur;
+}
+
+static void write_single_char(int *word, int *write, str_arr_t *par,
+    char buf[par->b_wrd][par->b_len])
+{
+    buf[*word][*write] = 0;
+    (*word)++;
+    (*write) = 0;
+}
+
+void str_to_array(const char *str, const char *sep, str_arr_t *par,
+    char buf[par->b_wrd][par->b_len])
+{
+    int word = 0;
+    int cur = skip_wrds(str, sep, par) + 1;
+    int write = 1;
+
+    if (cur == -1)
+        return;
+    buf[0][0] = str[cur - 1];
+    for (; word < par->b_wrd - 1 && str[cur]; cur++) {
+        if (c_s(str[cur], par->exclude) != -1)
+            continue;
+        if (c_s(str[cur - 1], sep) == -1 && c_s(str[cur], sep) != -1)
+            write_single_char(&word, &write, par, buf);
+        if (c_s(str[cur], sep) == -1 && write == par->b_len - 1)
+            continue;
+        if (c_s(str[cur], sep) == -1) {
+            buf[word][write] = str[cur];
+            write++;
         }
     }
-    return 0;
+    buf[word + 1][0] = 0;
 }

@@ -14,7 +14,7 @@ int clamp(int x, int min, int max)
     return x;
 }
 
-int clampf(double x, double min, double max)
+float clampf(float x, float min, float max)
 {
     if (x < min)
         return min;
