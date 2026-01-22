@@ -207,7 +207,52 @@ static int parse_single_process(main_t *main, struct dirent *dp, int *total)
     return EXIT_SUCC;
 }
 
-int count_total_processes(void)
+static int get_uid_from_status(char *pid_name, main_t *main)
+{
+    char path[32];
+    char buf[512];
+    char arr[64][16] = {0};
+    FILE *file = NULL;
+    int i = 0;
+
+    sprintf(path, "/proc/%s/status", pid_name);
+    file = fopen(path, "r");
+    if (!file)
+        return -1;
+    fread(buf, 512, 1, file);
+    fclose(file);
+    str_to_array(buf, " \t\n", &(main->str_arr[PID_STATUS]), arr);
+    for (i = 0; arr[i][0]; i++) {
+        if (!strcmp(arr[i], "Uid:"))
+            return atoi(arr[i + 1]);
+    }
+    return -1;
+}
+
+static int match_user_with_uid(main_t *main, int uid)
+{
+    int i = 0;
+
+    for (i = 0; i < 128 && main->etc_data.uid[i]; i++) {
+        if (main->etc_data.uid[i] == uid)
+            return !strcmp(main->etc_data.user[i], main->args.user);
+    }
+    return 0;
+}
+
+static int check_user_filter(main_t *main, char *pid_name)
+{
+    int uid = 0;
+
+    if (!main->args.user)
+        return 1;
+    uid = get_uid_from_status(pid_name, main);
+    if (uid == -1)
+        return 0;
+    return match_user_with_uid(main, uid);
+}
+
+int count_total_processes(main_t *main)
 {
     DIR *dir = opendir("/proc");
     struct dirent *dp = NULL;
@@ -219,8 +264,11 @@ int count_total_processes(void)
         dp = readdir(dir);
         if (!dp)
             break;
-        if (atoi(dp->d_name) > 0)
-            count++;
+        if (atoi(dp->d_name) == 0)
+            continue;
+        if (!check_user_filter(main, dp->d_name))
+            continue;
+        count++;
     }
     closedir(dir);
     return count;
@@ -237,6 +285,8 @@ static int process_loop(DIR *dir, main_t *main, int *total)
             break;
         if (!atoi(dp->d_name))
             continue;
+        if (!check_user_filter(main, dp->d_name))
+            continue;
         if (skip++ < main->info.processes_skip)
             continue;
         if (parse_single_process(main, dp, total) == EXIT_FAIL)
@@ -251,7 +301,7 @@ int fetch_processes(main_t *main)
 {
     DIR *dir = opendir("/proc");
     int total = 0;
-    int dir_amount = count_total_processes();
+    int dir_amount = count_total_processes(main);
 
     if (!dir)
         return EXIT_FAIL;

@@ -14,7 +14,7 @@ static void end_program(main_t *main)
     refresh();
 }
 
-void handler(int status)
+static void handler(int status)
 {
     endwin();
     exit(status);
@@ -36,6 +36,21 @@ static int ini_ncurses(main_t *main)
     return EXIT_SUCC;
 }
 
+static int verify_user_exists(main_t *main)
+{
+    int i = 0;
+
+    if (!main->args.user)
+        return EXIT_SUCC;
+    for (i = 0; i < 128; i++) {
+        if (main->etc_data.user[i][0] == '\0')
+            break;
+        if (strcmp(main->etc_data.user[i], main->args.user) == 0)
+            return EXIT_SUCC;
+    }
+    return EXIT_FAIL;
+}
+
 int main(int argc, char **argv)
 {
     main_t main = {};
@@ -47,6 +62,10 @@ int main(int argc, char **argv)
         return EXIT_FAIL;
     getmaxyx(main.ncurses.screen, main.ncurses.y, main.ncurses.x);
     if (etc_parser(&main) == EXIT_FAIL) {
+        end_program(&main);
+        return EXIT_FAIL;
+    }
+    if (verify_user_exists(&main) == EXIT_FAIL) {
         end_program(&main);
         return EXIT_FAIL;
     }
