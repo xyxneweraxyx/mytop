@@ -1,7 +1,7 @@
 # Compilation
 TARGET := my_top
 CC := clang
-FLAGS := -Wall -Wextra -Wno-implicit-function-declaration -g3 -O2
+FLAGS := -Wall -Wextra -g3 -O2
 
 # Sources
 SRC := $(shell find . -name '*.c')

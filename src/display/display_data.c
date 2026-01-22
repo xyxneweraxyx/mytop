@@ -57,6 +57,7 @@ static void display_header(main_t *main)
 int display(main_t *main)
 {
     int early = 0;
+
     if (early) {
         refresh();
         return EXIT_SUCC;

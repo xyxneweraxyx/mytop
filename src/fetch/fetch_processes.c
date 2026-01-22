@@ -51,6 +51,7 @@ static int parse_status_cmdline(FILE *file, main_t *main,
     FILE *file2;
     char buff[2048] = {0};
     char arr[128][16] = {0};
+    int i = 0;
 
     fread(buff, 2048, 1, file);
     str_to_array(buff, " \t\n", &(main->str_arr[PID_STATUS]), arr);
@@ -69,9 +70,43 @@ static int parse_status_cmdline(FILE *file, main_t *main,
     if (!file2)
         return EXIT_FAIL;
     fread(buff, 64, 1, file2);
-    for (int i = 0; buff[i]; i++)
+    for (; buff[i] && i < 63; i++)
         main->info.processes[*total].command[i] = buff[i];
+    buff[i] = 0;
+    fclose(file2);
     return EXIT_SUCC;
+}
+
+static void init_process_slot(prc_t *prc)
+{
+    prc->pid = 0;
+    prc->pr = 0;
+    prc->ni = 0;
+    prc->res = 0;
+    prc->shr = 0;
+    prc->cpu = 0.0;
+    prc->mem = 0.0;
+    prc->s = '?';
+    prc->user[0] = '\0';
+    prc->time[0] = '\0';
+    prc->virt[0] = '\0';
+    prc->command[0] = '\0';
+}
+
+int count_total_processes(void)
+{
+    DIR *dir = opendir("/proc");
+    struct dirent *dp;
+    int count = 0;
+
+    if (!dir)
+        return 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (atoi(dp->d_name))
+            count++;
+    }
+    closedir(dir);
+    return count;
 }
 
 static int parse_single_process(main_t *main, struct dirent *dp, int *total)
@@ -80,21 +115,19 @@ static int parse_single_process(main_t *main, struct dirent *dp, int *total)
     FILE *file2;
     char path[32] = {0};
 
+    init_process_slot(&main->info.processes[*total]);
     main->info.processes[*total].pid = atoi(dp->d_name);
     sprintf(path, "/proc/%s/status", dp->d_name);
     file = fopen(path, "r");
     if (!file)
         return EXIT_FAIL;
-    if (parse_status_cmdline(file, main, total, dp->d_name) == EXIT_FAIL) {
-        fclose(file);
+    if (parse_status_cmdline(file, main, total, dp->d_name) == EXIT_FAIL)
         return EXIT_FAIL;
-    }
-    fclose(file);
     sprintf(path, "/proc/%s/stat", dp->d_name);
     file2 = fopen(path, "r");
     if (!file2)
         return EXIT_FAIL;
-    if (parse_stat(file, main, total) == EXIT_FAIL) {
+    if (parse_stat(file2, main, total) == EXIT_FAIL) {
         fclose(file2);
         return EXIT_FAIL;
     }
@@ -110,9 +143,11 @@ int fetch_processes(main_t *main)
     int skip = 0;
     int total = 0;
     bool failed = false;
+    int dir_amount = count_total_processes();
 
     if (!dir)
         return EXIT_FAIL;
+    main->info.processes_skip = clamp(main->info.processes_skip, 0, dir_amount - main->ncurses.y + 7);
     while (1) {
         dp = readdir(dir);
         if (!dp)

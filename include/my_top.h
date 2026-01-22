@@ -45,6 +45,7 @@
     #define PATH_LOADAVG "/proc/loadavg"
     #define PATH_UTMP "/run/utmp"
     #define PATH_TASKS "/proc/stat"
+    #define PATH_MEMINFO "/proc/meminfo"
 
     // FORMATS
     #define HDR_TOP "top - %s up %s, %d use%s, load average: %s\n"

@@ -53,7 +53,7 @@ void range_mem(char *buf, main_t *main)
     str = strstr(buf, "SwapFree");
     main->info.header_swap.free = parsing_str_mem(str) / 1024;
     str = strstr(buf, "MemAvailable");
-    main->info.header_swap.total = parsing_str_mem(str) / 1024;
+    main->info.header_swap.avail = parsing_str_mem(str) / 1024;
     main->info.header_mem.used = main->info.header_mem.total - main->info.header_mem.free;
     main->info.header_swap.used = main->info.header_swap.total - main->info.header_swap.free;
 }
@@ -63,9 +63,9 @@ int fetch_header_mem_swap(main_t *main)
     FILE *file;
     char buf[5000];
 
-    file = fopen("../../../../proc/meminfo", "r");
+    file = fopen(PATH_MEMINFO, "r");
     if (file == NULL)
-        return 84;
+        return EXIT_FAIL;
     fread(buf, sizeof(char), sizeof(buf), file);
     range_mem(buf, main);
     fclose(file);
