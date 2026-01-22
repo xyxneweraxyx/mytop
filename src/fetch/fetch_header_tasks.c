@@ -7,59 +7,48 @@
 
 #include "./../../include/my_top.h"
 
-static char *stock_tasks_data(char *str, char buf[16])
+void range_tasks(char *buf, main_t *main)
 {
     int i = 0;
-    int len = 0;
 
-    while (str[i] != ' ')
+    while (buf[i] != ')')
         i++;
-    while (str[i] == ' ')
-        i++;
-    while (str[i] != '\n') {
-        buf[len] = str[i];
-        i++;
-        len++;
-    }
-    buf[len] = '\0';
-    return buf;
-}
-
-static int parsing_str_tasks(char *str)
-{
-    int n = 0;
-    char buf[16] = {0};
-
-    if (str != NULL)
-        n = atoi(stock_tasks_data(str, buf));
-    return n;
-}
-
-static void range_tasks(char *buf, main_t *main)
-{
-    char *str;
-
-    str = strstr(buf, "processes");
-    //printw("%d\n", parsing_str_tasks(str));
-    main->info.header_tasks.total = parsing_str_tasks(str) / 1000;
-    str = strstr(buf, "procs_running");
-    main->info.header_tasks.running = parsing_str_tasks(str);
-    main->info.header_tasks.sleeping = main->info.header_tasks.total - main->info.header_tasks.running;
-    str = strstr(buf, "procs_blocked");
-    main->info.header_tasks.stopped = parsing_str_tasks(str);
-    main->info.header_tasks.zombie = 0.0;
+    i += 2;
+    if (buf[i] == 'S')
+        main->info.header_tasks.sleeping++;
+    if (buf[i] == 'R')
+        main->info.header_tasks.running++;
+    if (buf[i] == 'T')
+        main->info.header_tasks.stopped++;
+    if (buf[i] == 'Z')
+        main->info.header_tasks.zombie++;
+    main->info.header_tasks.total = main->info.header_tasks.running +
+        main->info.header_tasks.sleeping + main->info.header_tasks.stopped +
+        main->info.header_tasks.zombie;
 }
 
 int fetch_header_tasks(main_t *main)
 {
+    char buf[5000];
     FILE *file;
-    char buf[6000];
+    DIR *d = opendir("/proc");
+    struct dirent *rep = readdir(d);
 
-    file = fopen(PATH_TASKS, "r");
-    if (file == NULL)
-        return 84;
-    fread(buf, sizeof(char), sizeof(buf), file);
-    range_tasks(buf, main);
-    fclose(file);
-    return 0;
+    main->info.header_tasks.running = 0;
+    main->info.header_tasks.sleeping = 0;
+    main->info.header_tasks.stopped = 0;
+    main->info.header_tasks.zombie = 0;
+    main->info.header_tasks.total = 0;
+    while (rep != NULL) {
+        if (atoi(rep->d_name) != 0) {
+            sprintf(buf, "../../../../proc/%s/stat", rep->d_name);
+            file = fopen(buf, "r");
+            fread(buf, sizeof(char), sizeof(buf), file);
+            fclose(file);
+            range_tasks(buf, main);
+        }
+        rep = readdir(d);
+    }
+    closedir(d);
+    return EXIT_SUCC;
 }
